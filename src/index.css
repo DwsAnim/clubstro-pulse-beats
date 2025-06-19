@@ -1,0 +1,267 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 262.1 83.3% 57.8%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 262.1 83.3% 57.8%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 48%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground transition-colors duration-300;
+  }
+}
+
+/* Clubstro theme specific overrides */
+.dark {
+  --clubstro-dark: #121212;
+  --clubstro-dark-gray: #222222;
+  --clubstro-light-gray: #333333;
+}
+
+.light {
+  --clubstro-dark: #ffffff;
+  --clubstro-dark-gray: #f5f5f5;
+  --clubstro-light-gray: #e0e0e0;
+}
+
+body.light {
+  color: #121212;
+}
+
+/* Navigation and UI elements in light mode */
+.light .bg-clubstro-dark {
+  background-color: #ffffff;
+}
+
+.light .bg-clubstro-dark-gray {
+  background-color: #f5f5f5;
+}
+
+.light .border-white\/10 {
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+.light .text-white {
+  color: #121212;
+}
+
+.light .text-gray-400 {
+  color: #666666;
+}
+
+.light .hover\:bg-white\/10:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+/* Improve dropdown contrast in light mode */
+.light .SelectContent {
+  background-color: #ffffff;
+  color: #121212;
+}
+
+.light .SelectItem {
+  color: #121212;
+}
+
+.light .SelectItem:focus {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* Improve ranked items visibility in light mode */
+.light .absolute.top-2.left-2 {
+  background-color: rgba(0, 0, 0, 0.9) !important;
+  color: #ffffff !important;
+}
+
+/* Improved visibility for ranked items in light mode */
+.light .text-white\/80,
+.light .text-white\/70,
+.light .text-gray-300 {
+  color: #333333 !important;
+}
+
+/* Improved contrast for numbers and stats in light mode */
+.light .text-2xl,
+.light .text-xl,
+.light .text-lg {
+  color: #333333;
+}
+
+/* Ensure rank numbers are visible in light mode */
+.light .absolute.rounded-full.w-6.h-6 {
+  background-color: rgba(0, 0, 0, 0.9) !important;
+  color: #ffffff !important;
+}
+
+/* Purple color overrides with improved contrast */
+.bg-clubstro-blue, 
+.data-\[state\=on\]\:bg-clubstro-blue {
+  background-color: #8b5cf6;
+}
+
+.text-clubstro-blue {
+  color: #a78bfa;
+}
+
+.dark .text-clubstro-blue {
+  color: #c4b5fd;
+}
+
+.light .text-clubstro-blue {
+  color: #7c3aed;
+}
+
+/* Filter background and text colors with improved contrast */
+.light .bg-clubstro-purple\/90,
+.light .hover\:bg-clubstro-purple {
+  color: #ffffff !important;
+}
+
+/* Improved visibility for ranked items in light mode */
+.light .text-white\/80,
+.light .text-white\/70,
+.light .text-gray-300 {
+  color: #333333 !important;
+}
+
+/* Improved contrast for numbers and stats in light mode */
+.light .text-2xl,
+.light .text-xl,
+.light .text-lg {
+  color: #333333;
+}
+
+.bg-clubstro-blue\/90 {
+  background-color: rgba(139, 92, 246, 0.9);
+}
+
+.bg-clubstro-blue\/20 {
+  background-color: rgba(139, 92, 246, 0.2);
+}
+
+.hover\:bg-clubstro-blue:hover {
+  background-color: #8b5cf6;
+}
+
+.bg-clubstro-purple {
+  background-color: #8b5cf6;
+}
+
+.hover\:bg-clubstro-purple\/80:hover {
+  background-color: rgba(139, 92, 246, 0.8);
+}
+
+/* Dark mode backgrounds with opacity */
+.dark .bg-clubstro-dark\/80 {
+  background-color: rgba(18, 18, 18, 0.8);
+}
+
+/* Animation classes */
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
+}
+
+@layer components {
+  /* SelectItem dropdown contrast improvements */
+  .SelectContent {
+    @apply bg-white dark:bg-clubstro-dark-gray border border-gray-200 dark:border-white/10;
+  }
+
+  .SelectItem {
+    @apply text-gray-800 dark:text-white;
+  }
+
+  .SelectItem:focus, 
+  .SelectItem[data-highlighted] {
+    @apply bg-gray-100;
+  }
+  
+  .dark .SelectItem:focus, 
+  .dark .SelectItem[data-highlighted] {
+    background-color: rgba(18, 18, 18, 0.8);
+  }
+}
