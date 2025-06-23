@@ -119,6 +119,9 @@ const AudioUploader: React.FC = () => {
           </button>
         </div>
       )}
+<p className="text-sm text-gray-400">
+  Logged in as: {user?.email || 'No user'}
+</p>
 
       <h1 className="text-2xl font-semibold mb-4">Upload Audio</h1>
 
