@@ -16,6 +16,7 @@ import NotFound from "./pages/NotFound";
 // Auth + Components
 import LoginPage from "@/components/LoginPage";
 import RegisterPage from "@/components/RegisterPage";
+import UserAudioPortal from "@/components/UserAudioPortal";
 import AudioUploader from "@/components/AudioUploader";
 import RankingView from "@/components/RankingView";
 import PrivateRoute from "@/components/PrivateRoute";
@@ -50,7 +51,7 @@ const App = () => (
                 path="/upload"
                 element={
                   <PrivateRoute>
-                    <AudioUploader />
+                    <UserAudioPortal />
                   </PrivateRoute>
                 }
               />
