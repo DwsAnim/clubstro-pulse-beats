@@ -8,7 +8,7 @@ const LoginPage: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const { login, loading, error, isAuthenticated, pendingUsers } = useAuth();
+  const { login, loading, error, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -16,30 +16,19 @@ const LoginPage: React.FC = () => {
 
   useEffect(() => {
     if (isAuthenticated) {
+      toast.success("Login successful.");
       navigate(from, { replace: true });
     }
   }, [isAuthenticated, navigate, from]);
 
   useEffect(() => {
-    if (error === "unapproved") {
-      toast.warning("Waiting for approval");
-    } else if (error) {
+    if (error) {
       toast.error(error);
     }
   }, [error]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    const found = pendingUsers.find(
-      (u) => u.email === email && u.password === password
-    );
-
-    if (found && !found.approved) {
-      toast.warning("Waiting for approval");
-      return;
-    }
-
     await login(email, password);
   };
 

@@ -1,3 +1,4 @@
+// src/components/AuthContext.tsx
 import {
   createContext,
   useContext,
@@ -5,12 +6,27 @@ import {
   useEffect,
   ReactNode,
 } from 'react';
-import { loginAPI } from '@/services/api';
+import { loginAPI, registerAPI } from '@/services/api';
 
 type User = {
   id: number;
   email: string;
   name: string;
+};
+
+type AuthContextType = {
+  isAuthenticated: boolean;
+  loading: boolean;
+  error: string | null;
+  user: User | null;
+  registerUser: (user: { name: string; email: string; password: string }) => Promise<void>;
+  login: (email: string, password: string, remember?: boolean) => Promise<void>;
+  logout: () => void;
+
+  // For future use
+  pendingUsers: PendingUser[];
+  approveUser: (email: string) => void;
+  rejectUser: (email: string) => void;
 };
 
 type PendingUser = {
@@ -20,19 +36,6 @@ type PendingUser = {
   approved: boolean;
 };
 
-type AuthContextType = {
-  isAuthenticated: boolean;
-  loading: boolean;
-  error: string | null;
-  user: User | null;
-  pendingUsers: PendingUser[];
-  registerUser: (user: PendingUser) => void;
-  approveUser: (email: string) => void;
-  rejectUser: (email: string) => void;
-  login: (email: string, password: string, remember?: boolean) => Promise<void>;
-  logout: () => void;
-};
-
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
@@ -40,9 +43,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
-  const [pendingUsers, setPendingUsers] = useState<PendingUser[]>([]);
 
-  const APPROVER_EMAILS = ['roland@clubstro.com', 'jacendubuisi6@gmail.com'];
+  // Kept for future admin approval system
+  const [pendingUsers, setPendingUsers] = useState<PendingUser[]>([]);
 
   useEffect(() => {
     setLoading(true);
@@ -55,8 +58,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           const parsed = JSON.parse(storedUser);
           setUser(parsed);
           setIsAuthenticated(true);
-        } catch (parseErr) {
-          console.error('User parse error:', parseErr);
+        } catch (err) {
+          console.error('User parse error:', err);
           setUser(null);
           setIsAuthenticated(false);
         }
@@ -66,84 +69,39 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
-  const registerUser = (newUser: PendingUser) => {
-    setPendingUsers((prev) => [...prev, newUser]);
-  };
-
-  const approveUser = (email: string) => {
-    setPendingUsers((prev) =>
-      prev.map((u) => (u.email === email ? { ...u, approved: true } : u))
-    );
-  };
-
-  const rejectUser = (email: string) => {
-    setPendingUsers((prev) => prev.filter((u) => u.email !== email));
+  const registerUser = async (newUser: { name: string; email: string; password: string }) => {
+    setLoading(true);
+    setError(null);
+    try {
+      await registerAPI(newUser.name, newUser.email, newUser.password);
+    } catch (err) {
+      console.error('Registration failed:', err);
+      throw new Error('Registration failed.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const login = async (email: string, password: string, remember = false) => {
     setLoading(true);
     setError(null);
-
     try {
-      // Check if user is in pending list
-      const pendingUser = pendingUsers.find(u => u.email === email);
+      const res = await loginAPI(email, password);
+      const { token, user } = res;
 
-      if (pendingUser) {
-        if (!pendingUser.approved) {
-          setError('Waiting for approval.');
-          setIsAuthenticated(false);
-          return;
-        }
-        if (pendingUser.password !== password) {
-          setError('Invalid credentials.');
-          setIsAuthenticated(false);
-          return;
-        }
-        const fakeUser: User = {
-          id: Math.floor(Math.random() * 10000), // simulated ID
-          email: pendingUser.email,
-          name: pendingUser.name,
-        };
-
-        const token = 'mocked-token';
-
-        if (remember) {
-          localStorage.setItem('token', token);
-          localStorage.setItem('user', JSON.stringify(fakeUser));
-        } else {
-          sessionStorage.setItem('token', token);
-          sessionStorage.setItem('user', JSON.stringify(fakeUser));
-        }
-
-        setUser(fakeUser);
-        setIsAuthenticated(true);
-        return;
+      if (remember) {
+        localStorage.setItem('token', token);
+        localStorage.setItem('user', JSON.stringify(user));
+      } else {
+        sessionStorage.setItem('token', token);
+        sessionStorage.setItem('user', JSON.stringify(user));
       }
 
-      // Check if trying to log in as an admin approver
-      if (APPROVER_EMAILS.includes(email)) {
-        const res = await loginAPI(email, password); // mock or real API call
-        const { token, user } = res;
-
-        if (remember) {
-          localStorage.setItem('token', token);
-          localStorage.setItem('user', JSON.stringify(user));
-        } else {
-          sessionStorage.setItem('token', token);
-          sessionStorage.setItem('user', JSON.stringify(user));
-        }
-
-        setUser(user);
-        setIsAuthenticated(true);
-        return;
-      }
-
-      // If not in pending and not admin — reject
-      setError('Invalid credentials.');
-      setIsAuthenticated(false);
+      setUser(user);
+      setIsAuthenticated(true);
     } catch (err) {
-      console.error(err);
-      setError('Login failed.');
+      console.error('Login error:', err);
+      setError('Invalid credentials.');
       setIsAuthenticated(false);
     } finally {
       setLoading(false);
@@ -157,6 +115,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsAuthenticated(false);
   };
 
+  // Future-use only
+  const approveUser = (email: string) => {
+    setPendingUsers((prev) =>
+      prev.map((u) => (u.email === email ? { ...u, approved: true } : u))
+    );
+  };
+
+  const rejectUser = (email: string) => {
+    setPendingUsers((prev) => prev.filter((u) => u.email !== email));
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -164,10 +133,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         loading,
         error,
         user,
+        registerUser,
         login,
         logout,
         pendingUsers,
-        registerUser,
         approveUser,
         rejectUser,
       }}

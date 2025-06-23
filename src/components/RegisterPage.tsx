@@ -10,7 +10,6 @@ const RegisterPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showModal, setShowModal] = useState(false);
   const navigate = useNavigate();
 
   const { registerUser } = useAuth();
@@ -25,9 +24,11 @@ const RegisterPage: React.FC = () => {
 
     setLoading(true);
     try {
-      await registerUser({ name, email, password, approved: false });
-      setShowModal(true);
+      await registerUser({ name, email, password });
+      toast.success('Registration successful. Please log in.');
+      navigate('/login');
     } catch (err) {
+      console.error(err);
       toast.error('Registration failed.');
     } finally {
       setLoading(false);
@@ -72,12 +73,6 @@ const RegisterPage: React.FC = () => {
             Register
           </button>
         </form>
-
-        {showModal && (
-          <div className="mt-6 p-4 border border-yellow-300 bg-yellow-100 text-yellow-800 rounded text-center">
-            Registration successful. Waiting for admin approval.
-          </div>
-        )}
 
         <p className="mt-4 text-sm text-center text-gray-300">
           Already have an account?{' '}

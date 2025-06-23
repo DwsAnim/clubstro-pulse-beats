@@ -6,13 +6,13 @@ import { useNavigate } from "react-router-dom";
 
 const AudioUploader: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);
-  const [clubName, setClubName] = useState<string>("");
-  const [address, setAddress] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(false);
+  const [clubName, setClubName] = useState("");
+  const [address, setAddress] = useState("");
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [progress, setProgress] = useState<number>(0);
-  const [dragOver, setDragOver] = useState<boolean>(false);
+  const [progress, setProgress] = useState(0);
+  const [dragOver, setDragOver] = useState(false);
 
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -61,16 +61,8 @@ const AudioUploader: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!file) {
-      toast.error("Please select a file first.");
-      return;
-    }
-    if (!clubName.trim()) {
-      toast.error("Please enter a club name.");
-      return;
-    }
-    if (!address.trim()) {
-      toast.error("Please enter an address.");
+    if (!file || !clubName.trim() || !address.trim()) {
+      toast.error("Please fill all fields and select an audio file.");
       return;
     }
 
@@ -110,18 +102,17 @@ const AudioUploader: React.FC = () => {
   return (
     <div className="p-4 relative">
       {isApproverAdmin && (
-        <div className="flex justify-end mb-4">
-          <button
-            onClick={() => navigate("/admin-approval")}
-            className="p-2 w-full max-w-xs bg-green-500 text-white font-semibold rounded hover:bg-green-600"
-          >
-            Approve Users
-          </button>
-        </div>
+        <button
+          onClick={() => navigate("/admin-approval")}
+          className="p-2 w-full bg-blue-600 text-white font-semibold rounded hover:bg-blue-700 mb-4"
+        >
+          Approve Users
+        </button>
       )}
-<p className="text-sm text-gray-400">
-  Logged in as: {user?.email || 'No user'}
-</p>
+
+      <p className="text-sm text-gray-400 mb-2">
+        Logged in as: {user?.email || "No user"}
+      </p>
 
       <h1 className="text-2xl font-semibold mb-4">Upload Audio</h1>
 
@@ -184,7 +175,7 @@ const AudioUploader: React.FC = () => {
               <div
                 className="bg-green-500 p-1 rounded text-black"
                 style={{ width: `${progress}%` }}
-              ></div>
+              />
             </div>
           </div>
         )}

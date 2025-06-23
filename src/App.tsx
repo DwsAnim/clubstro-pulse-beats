@@ -13,16 +13,16 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AdminPortal from "./pages/AdminPortal";
 import NotFound from "./pages/NotFound";
 
-// Import components
+// Auth + Components
 import LoginPage from "@/components/LoginPage";
 import RegisterPage from "@/components/RegisterPage";
 import AudioUploader from "@/components/AudioUploader";
 import RankingView from "@/components/RankingView";
-import AdminApproval from "@/components/AdminApproval"; // ✅ NEW
-
-// Auth
-import { AuthProvider } from "@/components/AuthContext";
 import PrivateRoute from "@/components/PrivateRoute";
+import { AuthProvider } from "@/components/AuthContext";
+
+// Admin Approval (temporarily unused but kept for future)
+import AdminApproval from "@/components/AdminApproval"; // ✅ kept, but not routed for now
 
 // Toasts
 import { ToastContainer } from "react-toastify";
@@ -46,23 +46,44 @@ const App = () => (
               <Route path="/register" element={<RegisterPage />} />
 
               {/* Protected Pages */}
-              <Route path="/upload" element={<PrivateRoute><AudioUploader /></PrivateRoute>} />
-              <Route path="/rankings" element={<PrivateRoute><RankingView /></PrivateRoute>} />
+              <Route
+                path="/upload"
+                element={
+                  <PrivateRoute>
+                    <AudioUploader />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/rankings"
+                element={
+                  <PrivateRoute>
+                    <RankingView />
+                  </PrivateRoute>
+                }
+              />
 
-              {/* ✅ Admin Approval Page (only for logged-in users) */}
-              <Route path="/admin-approval" element={<PrivateRoute><AdminApproval /></PrivateRoute>} />
+              {/* ⚠️ Future use — Admin Approval page not yet in use */}
+              {/* <Route
+                path="/admin-approval"
+                element={
+                  <PrivateRoute>
+                    <AdminApproval />
+                  </PrivateRoute>
+                }
+              /> */}
             </Route>
 
-            {/* Admin Pages */}
+            {/* Admin Routes */}
             <Route path="/admin" element={<AdminLogin />} />
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="/portal" element={<AdminPortal />} />
 
-            {/* 404 */}
+            {/* 404 Fallback */}
             <Route path="*" element={<NotFound />} />
           </Routes>
 
-          {/* Global UI */}
+          {/* Global UI Elements */}
           <Toaster />
           <Sonner />
           <ToastContainer position="top-right" />
