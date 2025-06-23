@@ -1,3 +1,4 @@
+// src/components/RegisterPage.tsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
@@ -36,8 +37,8 @@ const RegisterPage: React.FC = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#050c1b] text-white p-4 relative">
       {loading && <LoadingOverlay />}
-      <div className="w-full max-w-md bg-[#0c1a2e] p-6 rounded-lg shadow-lg z-10">
-        <h2 className="text-3xl font-bold mb-6 text-center">Create Account</h2>
+      <div className="bg-[#0c1a2e] w-full max-w-md p-6 rounded-lg shadow-lg z-10">
+        <h2 className="text-3xl font-bold text-center mb-6">Create Account</h2>
         <form onSubmit={handleRegister} className="space-y-4">
           <input
             type="text"

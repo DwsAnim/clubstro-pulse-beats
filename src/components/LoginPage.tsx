@@ -2,13 +2,13 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useAuth } from "@/components/AuthContext";
-import LoadingOverlay from '@/components/LoadingOverlay'; // Full-page overlay spinner
+import LoadingOverlay from "@/components/LoadingOverlay";
 
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const { login, loading, error, isAuthenticated } = useAuth();
+  const { login, loading, error, isAuthenticated, pendingUsers } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -21,11 +21,25 @@ const LoginPage: React.FC = () => {
   }, [isAuthenticated, navigate, from]);
 
   useEffect(() => {
-    if (error) toast.error(error);
+    if (error === "unapproved") {
+      toast.warning("Waiting for approval");
+    } else if (error) {
+      toast.error(error);
+    }
   }, [error]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const found = pendingUsers.find(
+      (u) => u.email === email && u.password === password
+    );
+
+    if (found && !found.approved) {
+      toast.warning("Waiting for approval");
+      return;
+    }
+
     await login(email, password);
   };
 
@@ -53,7 +67,7 @@ const LoginPage: React.FC = () => {
           />
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white p-2 rounded font-semibold"
+            className="w-full bg-blue-600 text-white p-2 rounded font-semibold hover:bg-blue-700 transition"
           >
             Login
           </button>

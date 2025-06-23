@@ -1,21 +1,25 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/components/AuthContext';
+
+const allowedAdminEmails = ['roland@clubstro.com', 'jacendubuisi6@gmail.com'];
 
 const AdminApproval: React.FC = () => {
   const { user, pendingUsers, approveUser, rejectUser } = useAuth();
   const navigate = useNavigate();
 
-  const isAdmin = user?.id <= 5;
+  useEffect(() => {
+    if (!user || !allowedAdminEmails.includes(user.email)) {
+      navigate('/');
+    }
+  }, [user, navigate]);
 
-
-  if (!isAdmin) {
-    navigate('/');
-    return null;
+  if (!user || !allowedAdminEmails.includes(user.email)) {
+    return null; // Prevent flashing before redirect
   }
 
   return (
-    <div className="max-w-3xl mx-auto mt-10 p-6 border rounded shadow">
+    <div className="max-w-3xl mx-auto mt-10 p-6 border rounded shadow bg-white text-black">
       <h2 className="text-2xl font-bold mb-6">Pending User Approvals</h2>
       {pendingUsers.length === 0 ? (
         <p>No pending users.</p>

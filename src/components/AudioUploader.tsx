@@ -17,7 +17,9 @@ const AudioUploader: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const isApproverAdmin = user && user.id <= 5;
+  const APPROVER_EMAILS = ['roland@clubstro.com', 'jacendubuisi6@gmail.com'];
+  const isApproverAdmin = user && APPROVER_EMAILS.includes(user.email);
+  
 
   const handleFile = (selectedFile: File) => {
     if (selectedFile.size > 10 * 1024 * 1024) {
@@ -176,10 +178,7 @@ const AudioUploader: React.FC = () => {
           <div className="mb-2">
             <p>Uploading: {progress}%</p>
             <div className="w-full bg-gray-200 rounded text-black">
-              <div
-                className="bg-green-500 p-1 rounded text-black"
-                style={{ width: `${progress}%` }}
-              ></div>
+              <div className="bg-green-500 p-1 rounded text-black" style={{ width: `${progress}%` }}></div>
             </div>
           </div>
         )}
