@@ -3,96 +3,99 @@ import api from "@/services/api";
 import { toast } from "react-toastify";
 import { useAuth } from "@/components/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Upload } from "lucide-react";
 
 const AudioUploader: React.FC = () => {
-  const [file, setFile] = useState<File | null>(null);
-  const [clubName, setClubName] = useState("");
-  const [address, setAddress] = useState("");
+  const [formData, setFormData] = useState({
+    title: "",
+    artist: "",
+    genre: "",
+    imageUrl: "",
+    songUrl: ""
+  });
+
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [audioFile, setAudioFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
   const [dragOver, setDragOver] = useState(false);
 
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const APPROVER_EMAILS = ['roland@clubstro.com', 'jacendubuisi6@gmail.com'];
-  const isApproverAdmin = user && APPROVER_EMAILS.includes(user.email);
-
-  const handleFile = (selectedFile: File) => {
-    if (selectedFile.size > 10 * 1024 * 1024) {
-      toast.error("File is too large. Max 10MB.");
-      return;
-    }
-    if (!selectedFile.type.startsWith("audio/")) {
-      toast.error("Invalid file format.");
-      return;
-    }
-    setFile(selectedFile);
-    setError(null);
-    setSuccess(null);
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      handleFile(e.target.files[0]);
-    }
-  };
-
-  const handleDrop = (e: DragEvent<HTMLDivElement>) => {
+  const handleDrop = (e: DragEvent<HTMLDivElement>, type: 'image' | 'audio') => {
     e.preventDefault();
     setDragOver(false);
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      handleFile(e.dataTransfer.files[0]);
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+
+    if (type === 'image' && file.type.startsWith("image/")) {
+      setImageFile(file);
+    } else if (type === 'audio' && (file.type.startsWith("audio/") || file.type.startsWith("video/"))) {
+      setAudioFile(file);
+    } else {
+      toast.error("Unsupported file type.");
     }
   };
 
-  const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setDragOver(true);
-  };
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'image' | 'audio') => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-  const handleDragLeave = (e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setDragOver(false);
+    if (type === 'image' && file.type.startsWith("image/")) {
+      setImageFile(file);
+    } else if (type === 'audio' && (file.type.startsWith("audio/") || file.type.startsWith("video/"))) {
+      setAudioFile(file);
+    } else {
+      toast.error("Unsupported file type.");
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const { title, artist, genre, imageUrl, songUrl } = formData;
 
-    if (!file || !clubName.trim() || !address.trim()) {
-      toast.error("Please fill all fields and select an audio file.");
+    if (!title || !artist || !genre || (!imageUrl && !imageFile) || (!songUrl && !audioFile)) {
+      toast.error("Please fill all required fields or upload files.");
       return;
     }
 
     setLoading(true);
-    setError(null);
-    setSuccess(null);
     setProgress(0);
 
     try {
-      const formData = new FormData();
-      formData.append("audio", file);
-      formData.append("club_name", clubName);
-      formData.append("address", address);
+      const data = new FormData();
+      data.append("title", title);
+      data.append("artist", artist);
+      data.append("genre", genre);
+      if (imageFile) data.append("image", imageFile);
+      else data.append("imageUrl", imageUrl);
 
-      await api.post("/app/admin/audio-clip", formData, {
+      if (audioFile) data.append("audio", audioFile);
+      else data.append("songUrl", songUrl);
+
+      await api.post("/app/admin/audio-clip", data, {
         onUploadProgress: (e) => {
           if (e.total) {
             setProgress(Math.round((e.loaded * 100) / e.total));
           }
-        },
+        }
       });
 
-      setSuccess("File uploaded successfully!");
-      toast.success("File uploaded successfully!");
-      setFile(null);
-      setClubName("");
-      setAddress("");
+      toast.success("Song uploaded successfully!");
+      setFormData({ title: "", artist: "", genre: "", imageUrl: "", songUrl: "" });
+      setImageFile(null);
+      setAudioFile(null);
     } catch (err) {
-      setError("Failed to upload.");
-      toast.error("File upload failed.");
+      toast.error("Upload failed.");
     } finally {
       setLoading(false);
       setProgress(0);
@@ -100,97 +103,128 @@ const AudioUploader: React.FC = () => {
   };
 
   return (
-    <div className="p-4 relative">
-      {isApproverAdmin && (
-        <button
-          onClick={() => navigate("/admin-approval")}
-          className="p-2 w-full bg-blue-600 text-white font-semibold rounded hover:bg-blue-700 mb-4"
-        >
-          Approve Users
-        </button>
-      )}
-
-      <p className="text-sm text-gray-400 mb-2">
-        Logged in as: {user?.email || "No user"}
-      </p>
-
-      <h1 className="text-2xl font-semibold mb-4">Upload Audio</h1>
-
-      <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          placeholder="Club Name"
-          value={clubName}
-          onChange={(e) => setClubName(e.target.value)}
+    <div className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <Label className="text-white">Song Title</Label>
+        <Input
+          name="title"
+          value={formData.title}
+          onChange={handleChange}
+          className="bg-clubstro-dark text-white border-white/10"
           required
-          className="mb-2 p-2 border rounded w-full text-black"
         />
-        <input
-          type="text"
-          placeholder="Address"
-          value={address}
-          onChange={(e) => setAddress(e.target.value)}
+
+        <Label className="text-white">Artist</Label>
+        <Input
+          name="artist"
+          value={formData.artist}
+          onChange={handleChange}
+          className="bg-clubstro-dark text-white border-white/10"
           required
-          className="mb-2 p-2 border rounded w-full text-black"
+        />
+
+        <Label className="text-white">Genre</Label>
+        <Input
+          name="genre"
+          value={formData.genre}
+          onChange={handleChange}
+          className="bg-clubstro-dark text-white border-white/10"
+          required
+        />
+
+        <Label className="text-white">Image URL (optional)</Label>
+        <Input
+          name="imageUrl"
+          value={formData.imageUrl}
+          onChange={handleChange}
+          placeholder="https://example.com/image.jpg"
+          className="bg-clubstro-dark text-white border-white/10"
         />
 
         <div
-          onDrop={handleDrop}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          className={`mb-2 p-4 border-2 border-dashed rounded text-center ${
+          onDrop={(e) => handleDrop(e, 'image')}
+          onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+          onDragLeave={(e) => { e.preventDefault(); setDragOver(false); }}
+          className={`p-4 border-2 border-dashed rounded text-center ${
             dragOver ? "border-green-500" : "border-gray-500"
-          }`}
+          } text-white`}
         >
-          {file ? (
-            <div>
-              <p>Selected: {file.name}</p>
-              <audio controls src={URL.createObjectURL(file)} />
-            </div>
+          {imageFile ? (
+            <p>{imageFile.name}</p>
           ) : (
-            <div>
-              <p>Drag & drop audio here or click to select</p>
+            <>
+              <p>Drop image or</p>
               <input
-                id="fileinput"
                 type="file"
-                onChange={handleFileChange}
-                accept="audio/*"
-                required
+                accept="image/*"
+                id="image-upload"
                 className="hidden"
+                onChange={(e) => handleFileChange(e, 'image')}
               />
-              <label
-                htmlFor="fileinput"
-                className="p-2 mt-2 block bg-gray-200 rounded cursor-pointer text-black"
-              >
-                Browse files
+              <label htmlFor="image-upload" className="cursor-pointer underline">
+                Browse
               </label>
-            </div>
+            </>
+          )}
+        </div>
+
+        <Label className="text-white">Song URL (optional)</Label>
+        <Input
+          name="songUrl"
+          value={formData.songUrl}
+          onChange={handleChange}
+          placeholder="https://example.com/song.mp3"
+          className="bg-clubstro-dark text-white border-white/10"
+        />
+
+        <div
+          onDrop={(e) => handleDrop(e, 'audio')}
+          onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+          onDragLeave={(e) => { e.preventDefault(); setDragOver(false); }}
+          className={`p-4 border-2 border-dashed rounded text-center ${
+            dragOver ? "border-green-500" : "border-gray-500"
+          } text-white`}
+        >
+          {audioFile ? (
+            <p>{audioFile.name}</p>
+          ) : (
+            <>
+              <p>Drop audio/video file or</p>
+              <input
+                type="file"
+                accept="audio/*,video/*"
+                id="audio-upload"
+                className="hidden"
+                onChange={(e) => handleFileChange(e, 'audio')}
+              />
+              <label htmlFor="audio-upload" className="cursor-pointer underline">
+                Browse
+              </label>
+            </>
           )}
         </div>
 
         {loading && (
-          <div className="mb-2">
-            <p>Uploading: {progress}%</p>
-            <div className="w-full bg-gray-200 rounded text-black">
+          <div className="text-white">
+            Uploading: {progress}%
+            <div className="w-full bg-gray-300 rounded">
               <div
-                className="bg-green-500 p-1 rounded text-black"
+                className="bg-green-500 p-1 rounded"
                 style={{ width: `${progress}%` }}
               />
             </div>
           </div>
         )}
 
-        <button
+        <Button
           disabled={loading}
           type="submit"
-          className="p-2 w-full bg-green-500 text-white font-semibold rounded disabled:opacity-50"
+          className="w-full bg-green-600 hover:bg-green-700 text-white"
         >
+          <Upload className="h-4 w-4 mr-2" />
           {loading ? "Uploading…" : "Submit"}
-        </button>
+        </Button>
       </form>
-
-      {error && <p className="text-red-500 mt-2">{error}</p>}
-      {success && <p className="text-green-500 mt-2">{success}</p>}
     </div>
   );
 };

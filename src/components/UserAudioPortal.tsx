@@ -1,28 +1,60 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Music, Upload, LogOut } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { useAuth } from "@/components/AuthContext";
 import AudioUploader from "@/components/AudioUploader";
+import { useToast } from "@/hooks/use-toast";
 
 const UserAudioPortal = () => {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, logout, loading } = useAuth();
+  const { toast } = useToast();
+  const [showTrendingSongs, setShowTrendingSongs] = useState(true);
 
   useEffect(() => {
-    if (!user) navigate("/login");
-  }, [user, navigate]);
+    if (!loading && !user) {
+      navigate("/login");
+    }
+
+    const storedSetting = localStorage.getItem("showTrendingSongs");
+    if (storedSetting !== null) {
+      setShowTrendingSongs(storedSetting === "true");
+    }
+  }, [user, loading, navigate]);
 
   const handleLogout = () => {
     logout();
     navigate("/login");
   };
 
+  const handleToggleTrendingSongs = (checked: boolean) => {
+    setShowTrendingSongs(checked);
+    localStorage.setItem("showTrendingSongs", checked.toString());
+    toast({
+      title: checked ? "Trending Songs Enabled" : "Trending Songs Disabled",
+      description: checked
+        ? "You will now see trending songs on the homepage."
+        : "Trending songs will now be hidden from your homepage.",
+    });
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-clubstro-dark-gray text-white">
+        Loading...
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-clubstro-dark-gray p-4">
       <div className="max-w-7xl mx-auto">
+        {/* Header */}
         <header className="flex justify-between items-center mb-8 p-4 bg-clubstro-dark rounded-lg border border-white/10">
           <div>
             <h1 className="text-2xl font-bold text-white">
@@ -30,8 +62,8 @@ const UserAudioPortal = () => {
             </h1>
             <p className="text-gray-400">Welcome, {user?.name}</p>
           </div>
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             onClick={handleLogout}
             className="text-white hover:bg-white/10"
           >
@@ -40,6 +72,28 @@ const UserAudioPortal = () => {
           </Button>
         </header>
 
+        {/* Toggle Section */}
+        <Card className="bg-clubstro-dark border-white/10 mb-6">
+          <CardHeader>
+            <CardTitle className="text-white flex items-center">
+              Show Trending Songs
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="trending-toggle"
+                checked={showTrendingSongs}
+                onCheckedChange={handleToggleTrendingSongs}
+              />
+              <Label htmlFor="trending-toggle" className="text-white">
+                Show Trending Songs Widget
+              </Label>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Upload Card */}
         <div className="grid grid-cols-1 gap-6">
           <Card className="bg-clubstro-dark border-white/10">
             <CardHeader>
@@ -50,14 +104,19 @@ const UserAudioPortal = () => {
             </CardHeader>
             <CardContent>
               <Tabs defaultValue="audio" className="w-full">
-                <TabsList className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 bg-clubstro-light-gray mb-4">
-                  <TabsTrigger value="audio" className="text-white data-[state=active]:bg-clubstro-blue">
+                <TabsList className="grid grid-cols-1 bg-clubstro-light-gray mb-4">
+                  <TabsTrigger
+                    value="audio"
+                    className="text-white data-[state=active]:bg-clubstro-blue"
+                  >
                     <Music className="h-4 w-4 mr-2" />
                     Upload Audio
                   </TabsTrigger>
                 </TabsList>
-
-                <TabsContent value="audio" className="bg-clubstro-dark p-4 rounded-lg border border-white/10">
+                <TabsContent
+                  value="audio"
+                  className="bg-clubstro-dark p-4 rounded-lg border border-white/10"
+                >
                   <AudioUploader />
                 </TabsContent>
               </Tabs>
