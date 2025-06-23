@@ -1,6 +1,8 @@
 import React, { useState, DragEvent } from "react";
 import api from "@/services/api";
 import { toast } from "react-toastify";
+import { useAuth } from "@/components/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const AudioUploader: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);
@@ -12,8 +14,13 @@ const AudioUploader: React.FC = () => {
   const [progress, setProgress] = useState<number>(0);
   const [dragOver, setDragOver] = useState<boolean>(false);
 
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const isApproverAdmin = user && user.id <= 5;
+
   const handleFile = (selectedFile: File) => {
-    if (selectedFile.size > 10 * 1024 * 1024) { // 10MB limit
+    if (selectedFile.size > 10 * 1024 * 1024) {
       toast.error("File is too large. Max 10MB.");
       return;
     }
@@ -44,7 +51,7 @@ const AudioUploader: React.FC = () => {
     e.preventDefault();
     setDragOver(true);
   };
-  
+
   const handleDragLeave = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setDragOver(false);
@@ -65,6 +72,7 @@ const AudioUploader: React.FC = () => {
       toast.error("Please enter an address.");
       return;
     }
+
     setLoading(true);
     setError(null);
     setSuccess(null);
@@ -79,16 +87,16 @@ const AudioUploader: React.FC = () => {
       await api.post("/app/admin/audio-clip", formData, {
         onUploadProgress: (e) => {
           if (e.total) {
-            setProgress(Math.round((e.loaded * 100) / e.total)); 
+            setProgress(Math.round((e.loaded * 100) / e.total));
           }
-        }
+        },
       });
 
       setSuccess("File uploaded successfully!");
       toast.success("File uploaded successfully!");
       setFile(null);
-      setClubName('');
-      setAddress('');
+      setClubName("");
+      setAddress("");
     } catch (err) {
       setError("Failed to upload.");
       toast.error("File upload failed.");
@@ -99,12 +107,21 @@ const AudioUploader: React.FC = () => {
   };
 
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-semibold mb-4">Upload Audio</h1>
+    <div className="p-4 relative">
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-semibold">Upload Audio</h1>
+        {isApproverAdmin && (
+          <button
+            onClick={() => navigate("/admin-approval")}
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          >
+            Approve Users
+          </button>
+        )}
+      </div>
 
       <form onSubmit={handleSubmit}>
         <input
-          aria-label="club name"
           type="text"
           placeholder="Club Name"
           value={clubName}
@@ -113,7 +130,6 @@ const AudioUploader: React.FC = () => {
           className="mb-2 p-2 border rounded w-full text-black"
         />
         <input
-          aria-label="address"
           type="text"
           placeholder="Address"
           value={address}
@@ -139,7 +155,6 @@ const AudioUploader: React.FC = () => {
             <div>
               <p>Drag & drop audio here or click to select</p>
               <input
-                aria-label="audio file"
                 id="fileinput"
                 type="file"
                 onChange={handleFileChange}
@@ -155,7 +170,6 @@ const AudioUploader: React.FC = () => {
               </label>
             </div>
           )}
-
         </div>
 
         {loading && (
@@ -173,7 +187,7 @@ const AudioUploader: React.FC = () => {
         <button
           disabled={loading}
           type="submit"
-          className="p-2 w-full bg-green-500 text-gray-50 font-semibold rounded disabled:opacity-50"
+          className="p-2 w-full bg-green-500 text-white font-semibold rounded disabled:opacity-50"
         >
           {loading ? "Uploading…" : "Submit"}
         </button>

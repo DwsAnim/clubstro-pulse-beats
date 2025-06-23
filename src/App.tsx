@@ -13,11 +13,12 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AdminPortal from "./pages/AdminPortal";
 import NotFound from "./pages/NotFound";
 
-// Import new and existing components
+// Import components
 import LoginPage from "@/components/LoginPage";
 import RegisterPage from "@/components/RegisterPage";
 import AudioUploader from "@/components/AudioUploader";
 import RankingView from "@/components/RankingView";
+import AdminApproval from "@/components/AdminApproval"; // ✅ NEW
 
 // Auth
 import { AuthProvider } from "@/components/AuthContext";
@@ -36,21 +37,23 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route element={<Layout />}>
+              {/* Public Pages */}
               <Route path="/" element={<Index />} />
               <Route path="/index" element={<Index />} />
               <Route path="/charts" element={<ChartsPage />} />
               <Route path="/events" element={<EventsPage />} />
-
-              {/* Public */}
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
 
-              {/* Private */}
+              {/* Protected Pages */}
               <Route path="/upload" element={<PrivateRoute><AudioUploader /></PrivateRoute>} />
               <Route path="/rankings" element={<PrivateRoute><RankingView /></PrivateRoute>} />
+
+              {/* ✅ Admin Approval Page (only for logged-in users) */}
+              <Route path="/admin-approval" element={<PrivateRoute><AdminApproval /></PrivateRoute>} />
             </Route>
 
-            {/* Admin */}
+            {/* Admin Pages */}
             <Route path="/admin" element={<AdminLogin />} />
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="/portal" element={<AdminPortal />} />
@@ -59,6 +62,7 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
 
+          {/* Global UI */}
           <Toaster />
           <Sonner />
           <ToastContainer position="top-right" />

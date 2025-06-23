@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useAuth } from '@/components/AuthContext';
-import LoadingOverlay from '@/components/LoadingOverlay'; // Full-page overlay spinner
+import LoadingOverlay from '@/components/LoadingOverlay';
 
 const RegisterPage: React.FC = () => {
   const [name, setName] = useState('');
@@ -34,17 +34,17 @@ const RegisterPage: React.FC = () => {
   };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center bg-gray-50 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-[#050c1b] text-white p-4 relative">
       {loading && <LoadingOverlay />}
-      <div className="w-full max-w-md p-6 border rounded shadow bg-white text-black z-10">
-        <h2 className="text-2xl font-bold mb-4 text-center">Register</h2>
+      <div className="w-full max-w-md bg-[#0c1a2e] p-6 rounded-lg shadow-lg z-10">
+        <h2 className="text-3xl font-bold mb-6 text-center">Create Account</h2>
         <form onSubmit={handleRegister} className="space-y-4">
           <input
             type="text"
             placeholder="Name"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full p-2 border rounded text-black"
+            className="w-full p-2 rounded bg-white text-black"
             required
           />
           <input
@@ -52,7 +52,7 @@ const RegisterPage: React.FC = () => {
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full p-2 border rounded text-black"
+            className="w-full p-2 rounded bg-white text-black"
             required
           />
           <input
@@ -60,7 +60,7 @@ const RegisterPage: React.FC = () => {
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full p-2 border rounded text-black"
+            className="w-full p-2 rounded bg-white text-black"
             required
           />
           <button
@@ -78,11 +78,11 @@ const RegisterPage: React.FC = () => {
           </div>
         )}
 
-        <p className="mt-4 text-center text-sm text-gray-700">
+        <p className="mt-4 text-sm text-center text-gray-300">
           Already have an account?{' '}
           <button
             onClick={() => navigate('/login')}
-            className="text-blue-600 underline"
+            className="text-blue-400 hover:underline"
           >
             Login
           </button>
