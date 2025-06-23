@@ -19,7 +19,6 @@ const AudioUploader: React.FC = () => {
 
   const APPROVER_EMAILS = ['roland@clubstro.com', 'jacendubuisi6@gmail.com'];
   const isApproverAdmin = user && APPROVER_EMAILS.includes(user.email);
-  
 
   const handleFile = (selectedFile: File) => {
     if (selectedFile.size > 10 * 1024 * 1024) {
@@ -110,17 +109,18 @@ const AudioUploader: React.FC = () => {
 
   return (
     <div className="p-4 relative">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-semibold">Upload Audio</h1>
-        {isApproverAdmin && (
+      {isApproverAdmin && (
+        <div className="flex justify-end mb-4">
           <button
             onClick={() => navigate("/admin-approval")}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            className="p-2 w-full max-w-xs bg-green-500 text-white font-semibold rounded hover:bg-green-600"
           >
             Approve Users
           </button>
-        )}
-      </div>
+        </div>
+      )}
+
+      <h1 className="text-2xl font-semibold mb-4">Upload Audio</h1>
 
       <form onSubmit={handleSubmit}>
         <input
@@ -178,7 +178,10 @@ const AudioUploader: React.FC = () => {
           <div className="mb-2">
             <p>Uploading: {progress}%</p>
             <div className="w-full bg-gray-200 rounded text-black">
-              <div className="bg-green-500 p-1 rounded text-black" style={{ width: `${progress}%` }}></div>
+              <div
+                className="bg-green-500 p-1 rounded text-black"
+                style={{ width: `${progress}%` }}
+              ></div>
             </div>
           </div>
         )}
