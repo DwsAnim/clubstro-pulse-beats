@@ -1,4 +1,4 @@
-// Updated AuthContext.tsx (no pending users, fixed session logic)
+// src/components/AuthContext.tsx
 import {
   createContext,
   useContext,
@@ -22,6 +22,18 @@ type AuthContextType = {
   registerUser: (user: { name: string; email: string; password: string }) => Promise<void>;
   login: (email: string, password: string, remember?: boolean) => Promise<void>;
   logout: () => void;
+
+  // For future use
+  pendingUsers: PendingUser[];
+  approveUser: (email: string) => void;
+  rejectUser: (email: string) => void;
+};
+
+type PendingUser = {
+  name: string;
+  email: string;
+  password: string;
+  approved: boolean;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -32,22 +44,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
 
-  useEffect(() => {
-    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-    const storedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
+  // Kept for future admin approval system
+  const [pendingUsers, setPendingUsers] = useState<PendingUser[]>([]);
 
-    if (token && storedUser) {
-      try {
-        const parsed = JSON.parse(storedUser);
-        setUser(parsed);
-        setIsAuthenticated(true);
-      } catch (err) {
-        console.error('User parse error:', err);
-        setUser(null);
-        setIsAuthenticated(false);
+  useEffect(() => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      const storedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
+
+      if (token && storedUser && storedUser !== 'undefined') {
+        try {
+          const parsed = JSON.parse(storedUser);
+          setUser(parsed);
+          setIsAuthenticated(true);
+        } catch (err) {
+          console.error('User parse error:', err);
+          setUser(null);
+          setIsAuthenticated(false);
+        }
       }
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
 
   const registerUser = async (newUser: { name: string; email: string; password: string }) => {
@@ -96,6 +115,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsAuthenticated(false);
   };
 
+  // Future-use only
+  const approveUser = (email: string) => {
+    setPendingUsers((prev) =>
+      prev.map((u) => (u.email === email ? { ...u, approved: true } : u))
+    );
+  };
+
+  const rejectUser = (email: string) => {
+    setPendingUsers((prev) => prev.filter((u) => u.email !== email));
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -106,6 +136,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         registerUser,
         login,
         logout,
+        pendingUsers,
+        approveUser,
+        rejectUser,
       }}
     >
       {children}
