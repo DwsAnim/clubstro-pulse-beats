@@ -5,10 +5,19 @@ import { useAuth } from "@/components/AuthContext";
 
 const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
-  const loc = useLocation();
+  const location = useLocation();
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center">Checking authentication...</div>;
-  if (!isAuthenticated) return <Navigate to="/login" replace state={{ from: loc }} />;
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#050c1b] text-white">
+        Authenticating...
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
 
   return <>{children}</>;
 };

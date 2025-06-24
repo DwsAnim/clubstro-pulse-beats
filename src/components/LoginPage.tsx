@@ -1,3 +1,4 @@
+// ✅ LoginPage.tsx (Updated)
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -11,15 +12,14 @@ const LoginPage: React.FC = () => {
   const { login, loading, error, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-
   const from = location.state?.from?.pathname || "/upload";
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (!loading && isAuthenticated) {
       toast.success("Login successful.");
       navigate(from, { replace: true });
     }
-  }, [isAuthenticated, navigate, from]);
+  }, [isAuthenticated, loading, navigate, from]);
 
   useEffect(() => {
     if (error) {
@@ -62,7 +62,7 @@ const LoginPage: React.FC = () => {
           </button>
         </form>
         <p className="mt-4 text-sm text-center text-gray-300">
-          Don’t have an account?{" "}
+          Don’t have an account? {" "}
           <Link to="/register" className="text-blue-400 hover:underline">
             Register
           </Link>

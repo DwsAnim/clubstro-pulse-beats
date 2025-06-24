@@ -1,9 +1,18 @@
-// src/components/AuthContext.tsx
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+// Updated AuthContext.tsx (no pending users, fixed session logic)
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from 'react';
 import { loginAPI, registerAPI } from '@/services/api';
 
-type User = { id: number; email: string; name: string };
-type PendingUser = { name: string; email: string; password: string; approved: boolean };
+type User = {
+  id: number;
+  email: string;
+  name: string;
+};
 
 type AuthContextType = {
   isAuthenticated: boolean;
@@ -13,9 +22,6 @@ type AuthContextType = {
   registerUser: (user: { name: string; email: string; password: string }) => Promise<void>;
   login: (email: string, password: string, remember?: boolean) => Promise<void>;
   logout: () => void;
-  pendingUsers: PendingUser[];
-  approveUser: (email: string) => void;
-  rejectUser: (email: string) => void;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -25,25 +31,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
-  const [pendingUsers, setPendingUsers] = useState<PendingUser[]>([]);
 
   useEffect(() => {
-    const initAuth = () => {
-      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-      const stored = localStorage.getItem('user') || sessionStorage.getItem('user');
-      if (token && stored) {
-        try {
-          const parsed: User = JSON.parse(stored);
-          setUser(parsed);
-          setIsAuthenticated(true);
-        } catch {
-          localStorage.removeItem('user');
-          localStorage.removeItem('token');
-        }
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    const storedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
+
+    if (token && storedUser) {
+      try {
+        const parsed = JSON.parse(storedUser);
+        setUser(parsed);
+        setIsAuthenticated(true);
+      } catch (err) {
+        console.error('User parse error:', err);
+        setUser(null);
+        setIsAuthenticated(false);
       }
-      setLoading(false);
-    };
-    initAuth();
+    }
+    setLoading(false);
   }, []);
 
   const registerUser = async (newUser: { name: string; email: string; password: string }) => {
@@ -51,6 +55,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setError(null);
     try {
       await registerAPI(newUser.name, newUser.email, newUser.password);
+    } catch (err) {
+      console.error('Registration failed:', err);
+      throw new Error('Registration failed.');
     } finally {
       setLoading(false);
     }
@@ -62,12 +69,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const res = await loginAPI(email, password);
       const { token, user } = res;
-      const storage = remember ? localStorage : sessionStorage;
-      storage.setItem('token', token);
-      storage.setItem('user', JSON.stringify(user));
+
+      if (remember) {
+        localStorage.setItem('token', token);
+        localStorage.setItem('user', JSON.stringify(user));
+      } else {
+        sessionStorage.setItem('token', token);
+        sessionStorage.setItem('user', JSON.stringify(user));
+      }
+
       setUser(user);
       setIsAuthenticated(true);
-    } catch {
+    } catch (err) {
+      console.error('Login error:', err);
       setError('Invalid credentials.');
       setIsAuthenticated(false);
     } finally {
@@ -82,26 +96,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsAuthenticated(false);
   };
 
-  const approveUser = (email: string) => {
-    setPendingUsers(u => u.map(x => x.email === email ? {...x, approved: true} : x));
-  };
-
-  const rejectUser = (email: string) => {
-    setPendingUsers(u => u.filter(x => x.email !== email));
-  };
-
   return (
-    <AuthContext.Provider value={{
-      isAuthenticated, loading, error, user, registerUser, login, logout,
-      pendingUsers, approveUser, rejectUser
-    }}>
+    <AuthContext.Provider
+      value={{
+        isAuthenticated,
+        loading,
+        error,
+        user,
+        registerUser,
+        login,
+        logout,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
 };
 
 export const useAuth = () => {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
-  return ctx;
+  const context = useContext(AuthContext);
+  if (!context) throw new Error('useAuth must be used within AuthProvider');
+  return context;
 };
