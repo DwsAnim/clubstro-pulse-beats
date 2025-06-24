@@ -1,4 +1,3 @@
-// src/components/AuthContext.tsx
 import {
   createContext,
   useContext,
@@ -48,8 +47,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [pendingUsers, setPendingUsers] = useState<PendingUser[]>([]);
 
   useEffect(() => {
-    setLoading(true);
-    try {
+    const loadStoredUser = () => {
       const token = localStorage.getItem('token') || sessionStorage.getItem('token');
       const storedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
 
@@ -63,10 +61,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setUser(null);
           setIsAuthenticated(false);
         }
+      } else {
+        setUser(null);
+        setIsAuthenticated(false);
       }
-    } finally {
-      setLoading(false);
-    }
+    };
+
+    loadStoredUser();
+    setLoading(false);
   }, []);
 
   const registerUser = async (newUser: { name: string; email: string; password: string }) => {
