@@ -1,17 +1,9 @@
-import {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  ReactNode,
-} from 'react';
+// src/components/AuthContext.tsx
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { loginAPI, registerAPI } from '@/services/api';
 
-type User = {
-  id: number;
-  email: string;
-  name: string;
-};
+type User = { id: number; email: string; name: string };
+type PendingUser = { name: string; email: string; password: string; approved: boolean };
 
 type AuthContextType = {
   isAuthenticated: boolean;
@@ -21,18 +13,9 @@ type AuthContextType = {
   registerUser: (user: { name: string; email: string; password: string }) => Promise<void>;
   login: (email: string, password: string, remember?: boolean) => Promise<void>;
   logout: () => void;
-
-  // For future use
   pendingUsers: PendingUser[];
   approveUser: (email: string) => void;
   rejectUser: (email: string) => void;
-};
-
-type PendingUser = {
-  name: string;
-  email: string;
-  password: string;
-  approved: boolean;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -42,33 +25,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
-
-  // Kept for future admin approval system
   const [pendingUsers, setPendingUsers] = useState<PendingUser[]>([]);
 
   useEffect(() => {
-    const loadStoredUser = () => {
+    const initAuth = () => {
       const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-      const storedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
-
-      if (token && storedUser && storedUser !== 'undefined') {
+      const stored = localStorage.getItem('user') || sessionStorage.getItem('user');
+      if (token && stored) {
         try {
-          const parsed = JSON.parse(storedUser);
+          const parsed: User = JSON.parse(stored);
           setUser(parsed);
           setIsAuthenticated(true);
-        } catch (err) {
-          console.error('User parse error:', err);
-          setUser(null);
-          setIsAuthenticated(false);
+        } catch {
+          localStorage.removeItem('user');
+          localStorage.removeItem('token');
         }
-      } else {
-        setUser(null);
-        setIsAuthenticated(false);
       }
+      setLoading(false);
     };
-
-    loadStoredUser();
-    setLoading(false);
+    initAuth();
   }, []);
 
   const registerUser = async (newUser: { name: string; email: string; password: string }) => {
@@ -76,9 +51,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setError(null);
     try {
       await registerAPI(newUser.name, newUser.email, newUser.password);
-    } catch (err) {
-      console.error('Registration failed:', err);
-      throw new Error('Registration failed.');
     } finally {
       setLoading(false);
     }
@@ -90,19 +62,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const res = await loginAPI(email, password);
       const { token, user } = res;
-
-      if (remember) {
-        localStorage.setItem('token', token);
-        localStorage.setItem('user', JSON.stringify(user));
-      } else {
-        sessionStorage.setItem('token', token);
-        sessionStorage.setItem('user', JSON.stringify(user));
-      }
-
+      const storage = remember ? localStorage : sessionStorage;
+      storage.setItem('token', token);
+      storage.setItem('user', JSON.stringify(user));
       setUser(user);
       setIsAuthenticated(true);
-    } catch (err) {
-      console.error('Login error:', err);
+    } catch {
       setError('Invalid credentials.');
       setIsAuthenticated(false);
     } finally {
@@ -117,39 +82,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsAuthenticated(false);
   };
 
-  // Future-use only
   const approveUser = (email: string) => {
-    setPendingUsers((prev) =>
-      prev.map((u) => (u.email === email ? { ...u, approved: true } : u))
-    );
+    setPendingUsers(u => u.map(x => x.email === email ? {...x, approved: true} : x));
   };
 
   const rejectUser = (email: string) => {
-    setPendingUsers((prev) => prev.filter((u) => u.email !== email));
+    setPendingUsers(u => u.filter(x => x.email !== email));
   };
 
   return (
-    <AuthContext.Provider
-      value={{
-        isAuthenticated,
-        loading,
-        error,
-        user,
-        registerUser,
-        login,
-        logout,
-        pendingUsers,
-        approveUser,
-        rejectUser,
-      }}
-    >
+    <AuthContext.Provider value={{
+      isAuthenticated, loading, error, user, registerUser, login, logout,
+      pendingUsers, approveUser, rejectUser
+    }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
 export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuth must be used within AuthProvider');
-  return context;
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
+  return ctx;
 };
