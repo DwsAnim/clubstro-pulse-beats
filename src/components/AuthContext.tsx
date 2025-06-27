@@ -23,7 +23,6 @@ type AuthContextType = {
   login: (email: string, password: string, remember?: boolean) => Promise<void>;
   logout: () => void;
 
-  // For future use
   pendingUsers: PendingUser[];
   approveUser: (email: string) => void;
   rejectUser: (email: string) => void;
@@ -43,8 +42,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
-
-  // Kept for future admin approval system
   const [pendingUsers, setPendingUsers] = useState<PendingUser[]>([]);
 
   useEffect(() => {
@@ -97,6 +94,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         sessionStorage.setItem('user', JSON.stringify(user));
       }
 
+      // ✅ Add this
+      localStorage.setItem('userAuth', 'true');
+
       setUser(user);
       setIsAuthenticated(true);
     } catch (err) {
@@ -113,9 +113,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     sessionStorage.clear();
     setUser(null);
     setIsAuthenticated(false);
+
+    // ✅ Clear this too
+    localStorage.removeItem('userAuth');
   };
 
-  // Future-use only
   const approveUser = (email: string) => {
     setPendingUsers((prev) =>
       prev.map((u) => (u.email === email ? { ...u, approved: true } : u))

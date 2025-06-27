@@ -12,18 +12,18 @@ import { useToast } from "@/hooks/use-toast";
 
 const UserAudioPortal = () => {
   const navigate = useNavigate();
-  const { user, logout, loading } = useAuth();
+  const { user, logout } = useAuth();
   const { toast } = useToast();
 
   const [showTrendingSongs, setShowTrendingSongs] = useState(true);
 
-  // Ensure user is authenticated
+  // ✅ Flicker-free auth check
   useEffect(() => {
-    if (loading) return; // wait for auth to finish
-    if (!user) {
+    const isAuthenticated = localStorage.getItem("userAuth");
+    if (!isAuthenticated) {
       navigate("/login", { replace: true });
     }
-  }, [user, loading, navigate]);
+  }, [navigate]);
 
   useEffect(() => {
     const savedToggle = localStorage.getItem("showTrendingSongs");
@@ -48,14 +48,6 @@ const UserAudioPortal = () => {
     logout();
     navigate("/login");
   };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-clubstro-dark-gray text-white">
-        Loading...
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-clubstro-dark-gray p-4">
