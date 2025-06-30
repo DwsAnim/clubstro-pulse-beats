@@ -1,8 +1,9 @@
-
-import { 
-  Carousel, 
-  CarouselContent, 
-  CarouselItem
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious
 } from "@/components/ui/carousel";
 import SongCard from "@/components/SongCard";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -63,16 +64,14 @@ const TrendingSongs = ({ isAdmin = false }: TrendingSongsProps) => {
   const isMobile = useIsMobile();
   const [showWidget, setShowWidget] = useState(true);
   const [trendingSongs, setTrendingSongs] = useState<Song[]>(defaultSongs);
-  
+
   useEffect(() => {
-    // Check if admin has disabled the widget
-    const widgetEnabled = localStorage.getItem('showTrendingSongs');
+    const widgetEnabled = localStorage.getItem("showTrendingSongs");
     if (widgetEnabled !== null) {
-      setShowWidget(widgetEnabled === 'true');
+      setShowWidget(widgetEnabled === "true");
     }
-    
-    // Load custom songs if available
-    const savedSongs = localStorage.getItem('trendingSongs');
+
+    const savedSongs = localStorage.getItem("trendingSongs");
     if (savedSongs) {
       try {
         const parsedSongs = JSON.parse(savedSongs);
@@ -80,33 +79,30 @@ const TrendingSongs = ({ isAdmin = false }: TrendingSongsProps) => {
           setTrendingSongs(parsedSongs);
         }
       } catch (error) {
-        console.error('Error parsing saved songs:', error);
+        console.error("Error parsing saved songs:", error);
       }
     }
   }, []);
-  
-  // If the widget is disabled by admin and not in admin mode, don't render
-  if (!showWidget && !isAdmin) {
-    return null;
-  }
+
+  if (!showWidget && !isAdmin) return null;
 
   return (
-    <section className="mb-2">
+    <section className="mb-2 relative">
       <div className="flex items-center justify-between mb-1">
         <h2 className="text-base font-bold text-white">Trending Songs</h2>
       </div>
-      
-      <Carousel 
+
+      <Carousel
         opts={{
           align: "start",
           loop: true
         }}
-        className="w-full"
+        className="relative w-full"
       >
         <CarouselContent className="-ml-2 md:-ml-4">
           {trendingSongs.map((song) => (
-            <CarouselItem 
-              key={song.id} 
+            <CarouselItem
+              key={song.id}
               className="pl-2 md:pl-4 basis-full"
             >
               <div className="h-[80px] sm:h-[90px]">
@@ -122,6 +118,9 @@ const TrendingSongs = ({ isAdmin = false }: TrendingSongsProps) => {
             </CarouselItem>
           ))}
         </CarouselContent>
+
+        <CarouselPrevious className="absolute left-0 top-1/2 -translate-y-1/2 z-10" />
+        <CarouselNext className="absolute right-0 top-1/2 -translate-y-1/2 z-10" />
       </Carousel>
     </section>
   );

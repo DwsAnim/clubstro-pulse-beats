@@ -1,12 +1,26 @@
-import React, { useState, DragEvent } from "react";
-import api from "@/services/api";
+import React, { useState, useEffect, DragEvent } from "react";
 import { toast } from "react-toastify";
-import { useAuth } from "@/components/AuthContext";
-import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Upload } from "lucide-react";
+import { Upload, Trash2 } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from "@/components/ui/table";
+
+interface SongData {
+  id: number;
+  title: string;
+  artist: string;
+  genre: string;
+  image: string;
+  url: string;
+}
 
 const AudioUploader: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -22,9 +36,15 @@ const AudioUploader: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [dragOver, setDragOver] = useState(false);
+  const [songs, setSongs] = useState<SongData[]>([]);
 
-  const { user } = useAuth();
-  const navigate = useNavigate();
+  // Load trending songs on mount
+  useEffect(() => {
+    const stored = localStorage.getItem("trendingSongs");
+    if (stored) {
+      setSongs(JSON.parse(stored));
+    }
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -72,38 +92,66 @@ const AudioUploader: React.FC = () => {
     setProgress(0);
 
     try {
-      const data = new FormData();
-      data.append("title", title);
-      data.append("artist", artist);
-      data.append("genre", genre);
-      if (imageFile) data.append("image", imageFile);
-      else data.append("imageUrl", imageUrl);
+      // Simulate progress
+      const fakeUpload = () =>
+        new Promise<void>((resolve) => {
+          let loaded = 0;
+          const interval = setInterval(() => {
+            loaded += 10;
+            setProgress(Math.min(loaded, 100));
+            if (loaded >= 100) {
+              clearInterval(interval);
+              resolve();
+            }
+          }, 50);
+        });
 
-      if (audioFile) data.append("audio", audioFile);
-      else data.append("songUrl", songUrl);
+      await fakeUpload();
 
-      await api.post("/app/admin/audio-clip", data, {
-        onUploadProgress: (e) => {
-          if (e.total) {
-            setProgress(Math.round((e.loaded * 100) / e.total));
-          }
-        }
-      });
+      const uploadedUrl = audioFile ? URL.createObjectURL(audioFile) : songUrl;
+      const uploadedImage = imageFile ? URL.createObjectURL(imageFile) : imageUrl;
 
-      toast.success("Song uploaded successfully!");
+      const newSong: SongData = {
+        id: Date.now(),
+        title,
+        artist,
+        genre,
+        image: uploadedImage,
+        url: uploadedUrl
+      };
+
+      const updated = [...songs, newSong];
+      localStorage.setItem("trendingSongs", JSON.stringify(updated));
+      setSongs(updated);
+
+      toast.success(`"${newSong.title}" by ${newSong.artist} added to trending`);
+
       setFormData({ title: "", artist: "", genre: "", imageUrl: "", songUrl: "" });
       setImageFile(null);
       setAudioFile(null);
     } catch (err) {
-      toast.error("Upload failed.");
+      toast.error("Something went wrong while uploading.");
     } finally {
       setLoading(false);
       setProgress(0);
     }
   };
 
+  const handleRemoveSong = (id: number) => {
+    const updated = songs.filter(song => song.id !== id);
+    setSongs(updated);
+    localStorage.setItem("trendingSongs", JSON.stringify(updated));
+    toast.success("Song removed.");
+  };
+
+  const handlePublishChanges = () => {
+    localStorage.setItem("trendingSongs", JSON.stringify(songs));
+    toast.success("Changes published.");
+  };
+
   return (
     <div className="space-y-6">
+      {/* Upload Form */}
       <form onSubmit={handleSubmit} className="space-y-4">
         <Label className="text-white">Song Title</Label>
         <Input
@@ -111,6 +159,7 @@ const AudioUploader: React.FC = () => {
           value={formData.title}
           onChange={handleChange}
           className="bg-clubstro-dark text-white border-white/10"
+          placeholder="Enter Song Title"
           required
         />
 
@@ -120,6 +169,7 @@ const AudioUploader: React.FC = () => {
           value={formData.artist}
           onChange={handleChange}
           className="bg-clubstro-dark text-white border-white/10"
+          placeholder="Enter Artist Name"
           required
         />
 
@@ -129,6 +179,7 @@ const AudioUploader: React.FC = () => {
           value={formData.genre}
           onChange={handleChange}
           className="bg-clubstro-dark text-white border-white/10"
+          placeholder="Enter Genre"
           required
         />
 
@@ -225,6 +276,56 @@ const AudioUploader: React.FC = () => {
           {loading ? "Uploading…" : "Submit"}
         </Button>
       </form>
+
+      {/* Trending Songs Section */}
+      <div className="bg-clubstro-light-gray p-4 rounded-lg overflow-hidden">
+        <h3 className="font-medium text-white mb-4">Current Trending Songs</h3>
+
+        {songs.length === 0 ? (
+          <div className="text-center py-8 text-gray-400">
+            No songs added yet. Add some songs to get started.
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-white">Title</TableHead>
+                  <TableHead className="text-white">Artist</TableHead>
+                  <TableHead className="text-white">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {songs.map((song) => (
+                  <TableRow key={song.id}>
+                    <TableCell className="font-medium text-white">{song.title}</TableCell>
+                    <TableCell className="text-white">{song.artist}</TableCell>
+                    <TableCell>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => handleRemoveSong(song.id)}
+                        className="text-red-500 hover:text-red-600 hover:bg-red-500/10 p-1 h-auto"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+
+        <Button
+          onClick={handlePublishChanges}
+          disabled={songs.length === 0}
+          className="w-full mt-4 bg-clubstro-blue hover:bg-clubstro-blue/90"
+        >
+          <Upload className="h-4 w-4 mr-2" />
+          Publish Changes
+        </Button>
+      </div>
     </div>
   );
 };
