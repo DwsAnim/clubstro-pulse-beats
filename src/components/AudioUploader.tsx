@@ -37,8 +37,8 @@ const AudioUploader: React.FC = () => {
   const [progress, setProgress] = useState(0);
   const [dragOver, setDragOver] = useState(false);
   const [songs, setSongs] = useState<SongData[]>([]);
+  const [editingId, setEditingId] = useState<number | null>(null);
 
-  // Load trending songs on mount
   useEffect(() => {
     const stored = localStorage.getItem("trendingSongs");
     if (stored) {
@@ -83,8 +83,8 @@ const AudioUploader: React.FC = () => {
     e.preventDefault();
     const { title, artist, genre, imageUrl, songUrl } = formData;
 
-    if (!title || !artist || !genre || (!imageUrl && !imageFile) || (!songUrl && !audioFile)) {
-      toast.error("Please fill all required fields or upload files.");
+    if (!title || !artist || !genre) {
+      toast.error("Please fill all required fields.");
       return;
     }
 
@@ -92,7 +92,6 @@ const AudioUploader: React.FC = () => {
     setProgress(0);
 
     try {
-      // Simulate progress
       const fakeUpload = () =>
         new Promise<void>((resolve) => {
           let loaded = 0;
@@ -112,7 +111,7 @@ const AudioUploader: React.FC = () => {
       const uploadedImage = imageFile ? URL.createObjectURL(imageFile) : imageUrl;
 
       const newSong: SongData = {
-        id: Date.now(),
+        id: editingId ?? Date.now(),
         title,
         artist,
         genre,
@@ -120,17 +119,25 @@ const AudioUploader: React.FC = () => {
         url: uploadedUrl
       };
 
-      const updated = [...songs, newSong];
+      let updated: SongData[];
+
+      if (editingId) {
+        updated = songs.map(song => song.id === editingId ? newSong : song);
+        toast.success("Song updated successfully.");
+      } else {
+        updated = [...songs, newSong];
+        toast.success(`"${newSong.title}" added to trending`);
+      }
+
       localStorage.setItem("trendingSongs", JSON.stringify(updated));
       setSongs(updated);
-
-      toast.success(`"${newSong.title}" by ${newSong.artist} added to trending`);
 
       setFormData({ title: "", artist: "", genre: "", imageUrl: "", songUrl: "" });
       setImageFile(null);
       setAudioFile(null);
+      setEditingId(null);
     } catch (err) {
-      toast.error("Something went wrong while uploading.");
+      toast.error("Something went wrong.");
     } finally {
       setLoading(false);
       setProgress(0);
@@ -142,6 +149,20 @@ const AudioUploader: React.FC = () => {
     setSongs(updated);
     localStorage.setItem("trendingSongs", JSON.stringify(updated));
     toast.success("Song removed.");
+  };
+
+  const handleEditSong = (song: SongData) => {
+    setFormData({
+      title: song.title,
+      artist: song.artist,
+      genre: song.genre,
+      imageUrl: song.image.startsWith("blob:") ? "" : song.image,
+      songUrl: song.url.startsWith("blob:") ? "" : song.url
+    });
+    setImageFile(null);
+    setAudioFile(null);
+    setEditingId(song.id);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handlePublishChanges = () => {
@@ -273,7 +294,7 @@ const AudioUploader: React.FC = () => {
           className="w-full bg-green-600 hover:bg-green-700 text-white"
         >
           <Upload className="h-4 w-4 mr-2" />
-          {loading ? "Uploading…" : "Submit"}
+          {editingId ? "Update Song" : loading ? "Uploading…" : "Submit"}
         </Button>
       </form>
 
@@ -300,7 +321,15 @@ const AudioUploader: React.FC = () => {
                   <TableRow key={song.id}>
                     <TableCell className="font-medium text-white">{song.title}</TableCell>
                     <TableCell className="text-white">{song.artist}</TableCell>
-                    <TableCell>
+                    <TableCell className="flex gap-2">
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => handleEditSong(song)}
+                        className="text-yellow-500 hover:text-yellow-600 hover:bg-yellow-500/10 p-1 h-auto"
+                      >
+                        Edit
+                      </Button>
                       <Button 
                         variant="ghost" 
                         size="sm"
