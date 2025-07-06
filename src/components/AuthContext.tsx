@@ -1,4 +1,3 @@
-// src/components/AuthContext.tsx
 import {
   createContext,
   useContext,
@@ -14,6 +13,13 @@ type User = {
   name: string;
 };
 
+type PendingUser = {
+  name: string;
+  email: string;
+  password: string;
+  approved: boolean;
+};
+
 type AuthContextType = {
   isAuthenticated: boolean;
   loading: boolean;
@@ -26,13 +32,6 @@ type AuthContextType = {
   pendingUsers: PendingUser[];
   approveUser: (email: string) => void;
   rejectUser: (email: string) => void;
-};
-
-type PendingUser = {
-  name: string;
-  email: string;
-  password: string;
-  approved: boolean;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -57,8 +56,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setIsAuthenticated(true);
         } catch (err) {
           console.error('User parse error:', err);
-          setUser(null);
-          setIsAuthenticated(false);
         }
       }
     } finally {
@@ -66,11 +63,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
-  const registerUser = async (newUser: { name: string; email: string; password: string }) => {
+  const registerUser = async ({ name, email, password }: { name: string; email: string; password: string }) => {
     setLoading(true);
     setError(null);
     try {
-      await registerAPI(newUser.name, newUser.email, newUser.password);
+      await registerAPI(name, email, password);
     } catch (err) {
       console.error('Registration failed:', err);
       throw new Error('Registration failed.');
@@ -86,16 +83,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const res = await loginAPI(email, password);
       const { token, user } = res;
 
-      if (remember) {
-        localStorage.setItem('token', token);
-        localStorage.setItem('user', JSON.stringify(user));
-      } else {
-        sessionStorage.setItem('token', token);
-        sessionStorage.setItem('user', JSON.stringify(user));
-      }
-
-      // ✅ Add this
-      localStorage.setItem('userAuth', 'true');
+      const storage = remember ? localStorage : sessionStorage;
+      storage.setItem('token', token);
+      storage.setItem('user', JSON.stringify(user));
 
       setUser(user);
       setIsAuthenticated(true);
@@ -109,13 +99,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = () => {
-    localStorage.clear();
-    sessionStorage.clear();
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('user');
+
     setUser(null);
     setIsAuthenticated(false);
-
-    // ✅ Clear this too
-    localStorage.removeItem('userAuth');
   };
 
   const approveUser = (email: string) => {
